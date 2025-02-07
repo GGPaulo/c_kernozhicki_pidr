@@ -7,9 +7,6 @@ void file_input() {
     freopen("output.txt", "w", stdout);
 }
 
-
-// sosi moy pisunchek
-
 class TooLong { public:
     int BASE_LOG = 18; // всегда четный!
     __int128 BASE = 1e18;
