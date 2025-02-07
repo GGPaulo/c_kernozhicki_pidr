@@ -1,4 +1,8 @@
-#include <bits/stdc++.h>
+#if __has_include(<bits/stdc++.h>)
+    #include <bits/stdc++.h>
+#else
+    #include "my_lib.h"
+#endif
 
 using namespace std;
 
@@ -14,7 +18,7 @@ class TooLong { public:
     vector<__int128> a;
     bool negative = false;
     
-    // Перегрузка операторов == != > >= < <=
+    // Перегрузка операторов == != > < >= <=
     
     bool operator == (const TooLong &other) const {
         return a == other.a && negative == other.negative;
@@ -34,10 +38,6 @@ class TooLong { public:
         return false;
     }
     
-    bool operator >= (const TooLong &other) const {
-        return *this == other || *this > other;
-    }
-    
     bool operator < (const TooLong &other) const {
         if (a.size() != other.a.size()) return a.size() < other.a.size();
         
@@ -48,19 +48,23 @@ class TooLong { public:
         return false;
     }
     
+    bool operator >= (const TooLong &other) const {
+        return !(*this < other);
+    }
+    
     bool operator <= (const TooLong &other) const {
-        return *this == other || *this < other;
+        return !(*this > other);
     }
     
     // Перегрузка операторов (унарный минус) + - / *
     
-    TooLong operator - () {
+    TooLong operator - () const {
         TooLong ret = *this;
         ret.negative = !ret.negative;
         return ret;
     }
     
-    TooLong operator + (const TooLong &other) {
+    TooLong operator + (const TooLong &other) const {
         int mx = (int) max(a.size(), other.a.size());
         TooLong ret;
         
@@ -72,6 +76,22 @@ class TooLong { public:
         }
         
         if (add) ret.a.push_back(add);
+        
+        return ret;
+    }
+    
+    TooLong operator - (const TooLong &other) const {
+        TooLong ret;
+        
+        __int128 take = 0;
+        for (int i = 0; i < min(a.size(), other.a.size()); i++) {
+            if (a[i] - take > other.a[i]) {
+                ret.a.push_back(a[i] - take - other.a[i]);
+                take = 0;
+            } else {
+                take += other.a[i] - (a[i] - take);
+            }
+        }
         
         return ret;
     }
@@ -90,32 +110,10 @@ class TooLong { public:
         
         return *this;
     }
-    
-    // Оператор присвоения
-    
-    void operator = (__int128 value) {
-        a.clear();
-        while (value > 0) {
-            a.push_back(value % BASE);
-            value /= BASE;
-        }
-    }
-    
-    void operator = (long long value) {
-        a.clear();
-        while (value > 0) {
-            a.push_back(value % BASE);
-            value /= BASE;
-        }
-    }
-    
-    void operator = (int value) {
-        a = {value};
-    }
 
-    // Представление в виде строки
+    // Представление в виде строки, ввод/вывод
     
-    string print(__int128 x, bool zero_full_flag = 1) {
+    string print(const __int128 &x, bool zero_full_flag = 1) const {
         string a = to_string((long long) x);
         if (zero_full_flag) {
             while (a.size() < BASE_LOG) {
@@ -126,7 +124,7 @@ class TooLong { public:
         return a;
     }
     
-    string to_str() {
+    string to_str() const {
         string ret;
         if (negative) ret = '-';
         
@@ -135,6 +133,22 @@ class TooLong { public:
         
         return ret;
     }
+    
+    friend ostream& operator << (ostream &os, TooLong &value) {
+        os << value.to_str();
+        return os;
+    }
+    
+    friend istream& operator >> (istream &is, TooLong &value) {
+        string s;
+        is >> s;
+        
+        value = s;
+        
+        return is;
+    }
+    
+    // Экземпляры класса
     
     TooLong (string s = "") {
         if (!s.empty() && s[0] == '-') {
@@ -154,18 +168,36 @@ class TooLong { public:
         }
     }
     
-    TooLong (__int128 value) {
-        a = {value};
+    void operator = (string s) {
+        if (!s.empty() && s[0] == '-') {
+            negative = true;
+            s.erase(0, 1);
+        }
+        
+        __int128 pwr = 1;
+        for (int i = (int) s.size()-1; i >= 0; i--) {
+            if (a.empty() || pwr >= BASE) {
+                a.push_back(s[i] - '0');
+                pwr = 1;
+            } else {
+                a.back() = a.back() + (s[i] - '0') * pwr;
+            }
+            pwr *= 10;
+        }
     }
     
-    TooLong (long long value) {
+    
+    template <typename T, typename = enable_if_t<is_integral_v<T>>>
+    TooLong (T value) {
         while (value > 0) {
             a.push_back(value % BASE);
             value /= BASE;
         }
     }
     
-    TooLong (int value) {
+    template <typename T, typename = enable_if_t<is_integral_v<T>>>
+    void operator = (T value) {
+        a.clear();
         while (value > 0) {
             a.push_back(value % BASE);
             value /= BASE;
@@ -179,7 +211,10 @@ class TooLong { public:
 };
 
 int main(){
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
     
-
+    
     return 0;
 }
